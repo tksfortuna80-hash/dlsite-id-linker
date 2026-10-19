@@ -36,7 +36,7 @@ DLsite の作品ページへのリンクに自動で変換する Chrome 拡張�
 ## インストール手順
 
 1. このリポジトリをダウンロードする
-   - `git clone https://github.com/<ユーザー名>/dlsite-id-linker.git`
+   - `git clone https://github.com/tksfortuna80-hash/dlsite-id-linker.git`
    - または GitHub の「Code」→「Download ZIP」で取得して展開する
 2. Chrome で `chrome://extensions` を開く
 3. 右上の「デベロッパー モード」をオンにする

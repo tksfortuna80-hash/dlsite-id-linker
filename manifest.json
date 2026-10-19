@@ -3,6 +3,7 @@
   "name": "DLsite ID Linker",
   "version": "1.0.0",
   "description": "ページ内の DLsite 作品番号（RJ / BJ / VJ など）を作品ページへのリンクに変換します。",
+  "homepage_url": "https://github.com/tksfortuna80-hash/dlsite-id-linker",
   "permissions": ["storage"],
   "action": {
     "default_popup": "popup/popup.html",

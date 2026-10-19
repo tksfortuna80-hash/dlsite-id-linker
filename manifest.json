@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "DLsite ID Linker",
+  "version": "1.0.0",
+  "description": "ページ内の DLsite 作品番号（RJ / BJ / VJ など）を作品ページへのリンクに変換します。",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "DLsite ID Linker",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": ["*://dlsite.com/*", "*://*.dlsite.com/*"],
+      "js": ["src/departments.js", "src/storage.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

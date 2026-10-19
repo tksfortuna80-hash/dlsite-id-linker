@@ -1,0 +1,17 @@
+/* 元の文字の見た目はなるべく保ち、下線でリンクと分かるようにする。
+   下線の色はフロアごとの色（--dlsite-floor-color）で区別する。 */
+a.dlsite-id-link {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--dlsite-floor-color, currentColor);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+a.dlsite-id-link:hover,
+a.dlsite-id-link:focus-visible {
+  text-decoration-style: solid;
+  color: var(--dlsite-floor-color, inherit);
+}

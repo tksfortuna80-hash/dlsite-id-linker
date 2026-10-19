@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DLsite ID Linker テストページ</title>
+  <style>
+    body { font: 14px/1.6 system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif; margin: 24px; color: #212529; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 16px; margin-top: 32px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #dee2e6; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f8f9fa; font-weight: 600; }
+    td.result { white-space: nowrap; width: 1%; }
+    tr.pass td.result { background: #d3f9d8; }
+    tr.fail td.result { background: #ffe3e3; }
+    .panel { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; }
+    .panel label { margin-right: 12px; }
+    #summary { font-weight: 600; }
+    [contenteditable] { border: 1px dashed #adb5bd; padding: 2px 4px; }
+    #dynamic { max-height: 240px; overflow: auto; border: 1px solid #dee2e6; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>DLsite ID Linker テストページ</h1>
+
+  <div class="panel">
+    <p>拡張機能のポップアップと同じ部門にチェックを入れてください。期待値はチェックした部門だけを対象に判定します。</p>
+    <label><input type="checkbox" class="judge-prefix" value="RJ" checked> 同人（RJ）</label>
+    <label><input type="checkbox" class="judge-prefix" value="BJ"> 成年コミック・書籍（BJ）</label>
+    <label><input type="checkbox" class="judge-prefix" value="VJ"> PCソフト・美少女ゲーム（VJ）</label>
+    <label><input type="checkbox" id="judge-disabled"> 拡張機能全体OFF</label>
+    <p id="summary">判定中…</p>
+  </div>
+
+  <h2>1. 検出すべきケース</h2>
+  <table>
+    <thead><tr><th>ケース</th><th>テキスト</th><th>期待されるリンク</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>同人・6桁</td><td class="sample" data-expect="RJ123456">RJ123456</td></tr>
+      <tr><td>同人・8桁</td><td class="sample" data-expect="RJ01234567">RJ01234567</td></tr>
+      <tr><td>書籍・6桁</td><td class="sample" data-expect="BJ123456">BJ123456</td></tr>
+      <tr><td>書籍・8桁</td><td class="sample" data-expect="BJ01234567">BJ01234567</td></tr>
+      <tr><td>PCソフト・6桁</td><td class="sample" data-expect="VJ123456">VJ123456</td></tr>
+      <tr><td>PCソフト・8桁</td><td class="sample" data-expect="VJ01234567">VJ01234567</td></tr>
+      <tr><td>小文字（URLは大文字に正規化）</td><td class="sample" data-expect="RJ654321,BJ654321,VJ654321">rj654321 / bj654321 / vj654321</td></tr>
+      <tr><td>大文字小文字混在</td><td class="sample" data-expect="RJ111222">Rj111222</td></tr>
+      <tr><td>日本語の文中</td><td class="sample" data-expect="RJ234567">この作品RJ234567がおすすめです。</td></tr>
+      <tr><td>1つのテキストに複数（部門混在）</td><td class="sample" data-expect="RJ111111,BJ222222,VJ33333333">RJ111111とBJ222222、それとVJ33333333も。</td></tr>
+      <tr><td>括弧・記号に囲まれている</td><td class="sample" data-expect="RJ345678,RJ456789,RJ567890">(RJ345678)「RJ456789」RJ567890.</td></tr>
+      <tr><td>インライン要素の中</td><td class="sample" data-expect="RJ678901,BJ678901"><b>RJ678901</b> と <span style="color:#1c7ed6">BJ678901</span></td></tr>
+      <tr><td>URL風テキスト（リンクではない）</td><td class="sample" data-expect="RJ789012">https://example.com/review/RJ789012</td></tr>
+      <tr><td>英数字以外（_ や -）に接している</td><td class="sample" data-expect="RJ890123,RJ901234">_RJ890123_ / -RJ901234-</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. 変換してはいけないケース</h2>
+  <table>
+    <thead><tr><th>ケース</th><th>テキスト</th><th>期待されるリンク</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>前に英字が接している</td><td class="sample" data-expect="">XRJ123456</td></tr>
+      <tr><td>前に数字が接している</td><td class="sample" data-expect="">1RJ123456</td></tr>
+      <tr><td>後ろに英字が接している</td><td class="sample" data-expect="">RJ123456A</td></tr>
+      <tr><td>数字が10桁</td><td class="sample" data-expect="">RJ1234567890</td></tr>
+      <tr><td>数字が7桁</td><td class="sample" data-expect="">RJ1234567</td></tr>
+      <tr><td>数字が5桁</td><td class="sample" data-expect="">RJ12345</td></tr>
+      <tr><td>接頭辞と数字の間に空白</td><td class="sample" data-expect="">RJ 123456</td></tr>
+      <tr><td>未定義の接頭辞</td><td class="sample" data-expect="">AB123456 / RE123456</td></tr>
+      <tr><td>既存の &lt;a&gt; 内</td><td class="sample" data-expect=""><a href="https://example.com/">RJ123456 へのリンク</a></td></tr>
+      <tr><td>&lt;a&gt; 内のネストした要素</td><td class="sample" data-expect=""><a href="https://example.com/"><span><b>RJ123456</b></span></a></td></tr>
+      <tr><td>input</td><td class="sample" data-expect=""><input type="text" value="RJ123456"></td></tr>
+      <tr><td>textarea</td><td class="sample" data-expect=""><textarea rows="1">RJ123456</textarea></td></tr>
+      <tr><td>code</td><td class="sample" data-expect=""><code>RJ123456</code></td></tr>
+      <tr><td>pre</td><td class="sample" data-expect=""><pre>RJ123456
+BJ123456</pre></td></tr>
+      <tr><td>contenteditable</td><td class="sample" data-expect=""><div contenteditable="true">RJ123456 <b>BJ123456</b></div></td></tr>
+      <tr><td>script / style / noscript（表示されない）</td><td class="sample" data-expect=""><script>/* RJ123456 */</script><style>/* RJ123456 */</style><noscript>RJ123456</noscript>（内部に RJ 番号あり）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. 動的に追加されるコンテンツ（MutationObserver）</h2>
+  <p>
+    <button type="button" id="add-one">1件追加</button>
+    <button type="button" id="add-many">無限スクロール風に200件追加</button>
+    <button type="button" id="rewrite">既存テキストを書き換え</button>
+    <button type="button" id="spa">SPA風に中身を差し替え</button>
+  </p>
+  <p>
+    ページ側で観測した DOM 変更回数：<output id="mutation-count">0</output>
+    （ボタンを押していないのに増え続けていたら無限ループの疑いあり）
+  </p>
+  <div id="dynamic"><p id="rewrite-target">書き換え前のテキスト（番号なし）</p></div>
+
+  <script>
+    'use strict';
+
+    const IDS_FROM_HREF = /product_id\/([A-Z]{2}\d+)\.html/;
+    const PREFIX_TO_DEPT = { RJ: 'doujin', BJ: 'books', VJ: 'pcsoft' };
+    const DETECT = /(?<![A-Za-z0-9])(RJ|BJ|VJ)(\d{8}|\d{6})(?![A-Za-z0-9])/gi;
+
+    // ---- 判定 ----
+    function enabledPrefixes() {
+      if (document.getElementById('judge-disabled').checked) return new Set();
+      return new Set([...document.querySelectorAll('.judge-prefix:checked')].map((c) => c.value));
+    }
+
+    function code(text) {
+      // 結果表示は <code> 内に入れて拡張機能の変換対象から外す
+      const el = document.createElement('code');
+      el.textContent = text;
+      return el;
+    }
+
+    function ensureCells(sample) {
+      const row = sample.parentElement;
+      if (row.cells.length < 4) {
+        row.appendChild(document.createElement('td'));
+        const r = document.createElement('td');
+        r.className = 'result';
+        row.appendChild(r);
+      }
+      return [row.cells[2], row.cells[3]];
+    }
+
+    function judge() {
+      const prefixes = enabledPrefixes();
+      let pass = 0;
+      let total = 0;
+      for (const sample of document.querySelectorAll('.sample')) {
+        const expected = sample.dataset.expect
+          ? sample.dataset.expect.split(',').filter((id) => prefixes.has(id.slice(0, 2)))
+          : [];
+        const links = [...sample.querySelectorAll('a.dlsite-id-link')];
+        const problems = [];
+        const actual = links.map((a) => {
+          const m = IDS_FROM_HREF.exec(a.href);
+          if (a.target !== '_blank' || a.rel !== 'noopener noreferrer') problems.push('target/rel不正');
+          if (m && a.dataset.dlsiteDept !== PREFIX_TO_DEPT[m[1].slice(0, 2)]) problems.push('data属性不正');
+          return m ? m[1] : `?(${a.href})`;
+        });
+        const ok = !problems.length && actual.join(',') === expected.join(',');
+
+        const [expectCell, resultCell] = ensureCells(sample);
+        expectCell.replaceChildren(code(expected.join(', ') || '（なし）'));
+        resultCell.replaceChildren(
+          document.createTextNode(ok ? '✓ OK ' : '✗ NG '),
+          code(actual.join(', ') || '（なし）'),
+          ...(problems.length ? [document.createTextNode(' ' + problems.join(' '))] : []),
+        );
+        sample.parentElement.classList.toggle('pass', ok);
+        sample.parentElement.classList.toggle('fail', !ok);
+        total++;
+        if (ok) pass++;
+      }
+      // 動的領域：テキスト中の番号の数とリンク数が一致するか
+      const dyn = document.getElementById('dynamic');
+      const dynExpected = (dyn.textContent.match(DETECT) || [])
+        .filter((id) => prefixes.has(id.slice(0, 2).toUpperCase())).length;
+      const dynActual = dyn.querySelectorAll('a.dlsite-id-link').length;
+      const dynOk = dynExpected === dynActual;
+      total++;
+      if (dynOk) pass++;
+      // 二重変換（リンクの中のリンク）はページ全体で検査する
+      const nested = document.querySelectorAll('a a').length;
+      total++;
+      if (!nested) pass++;
+
+      const summary = document.getElementById('summary');
+      summary.textContent = `判定：${pass} / ${total} 件 OK`
+        + `（動的領域 ${dynOk ? '✓' : '✗'} リンク ${dynActual} / 期待 ${dynExpected}、`
+        + `入れ子リンク ${nested ? '✗ ' + nested + '件' : '✓ なし'}）`;
+      summary.dataset.pass = String(pass);
+      summary.dataset.total = String(total);
+    }
+
+    document.querySelectorAll('.panel input').forEach((el) => el.addEventListener('change', judge));
+    setInterval(judge, 1000);
+    judge();
+
+    // ---- 動的コンテンツ ----
+    const dynamic = document.getElementById('dynamic');
+    let seq = 0;
+    function nextId(prefix) {
+      seq++;
+      return prefix + String(100000 + seq);
+    }
+    function addParagraph() {
+      const p = document.createElement('p');
+      p.textContent = `#${seq + 1} 追加された作品 ${nextId('RJ')} / ${nextId('BJ')} / ${nextId('VJ')}`;
+      dynamic.appendChild(p);
+    }
+    document.getElementById('add-one').addEventListener('click', addParagraph);
+    document.getElementById('add-many').addEventListener('click', () => {
+      for (let i = 0; i < 200; i++) addParagraph();
+    });
+    document.getElementById('rewrite').addEventListener('click', () => {
+      // テキストノードの data を直接書き換える（characterData の変更）
+      document.getElementById('rewrite-target').firstChild.data = '書き換え後：RJ999999 が追加されました';
+    });
+    document.getElementById('spa').addEventListener('click', () => {
+      const section = document.createElement('section');
+      const h = document.createElement('h3');
+      h.textContent = '差し替え後の画面';
+      const p = document.createElement('p');
+      p.textContent = 'おすすめ：RJ222333、BJ01112222、VJ444555';
+      section.append(h, p);
+      dynamic.replaceChildren(section);
+    });
+
+    // ---- 無限ループ検知用カウンター ----
+    let mutationCount = 0;
+    const counter = document.getElementById('mutation-count');
+    new MutationObserver((records) => {
+      mutationCount += records.filter((r) => !counter.contains(r.target)
+        && !(r.target.closest && r.target.closest('td.result, td:nth-child(3), #summary'))).length;
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    setInterval(() => { counter.value = String(mutationCount); }, 500);
+  </script>
+</body>
+</html>

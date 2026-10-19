@@ -1,0 +1,121 @@
+:root {
+  --bg: #ffffff;
+  --fg: #212529;
+  --muted: #6c757d;
+  --border: #dee2e6;
+  --card: #f8f9fa;
+  --accent: #d6336c;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1f22;
+    --fg: #e9ecef;
+    --muted: #adb5bd;
+    --border: #3a3d42;
+    --card: #2a2c30;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 300px;
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h1 { margin: 0; font-size: 15px; }
+
+.section-title {
+  margin: 12px 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.departments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.dept {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--floor-color);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.dept input { margin: 0; accent-color: var(--floor-color); }
+
+.dept-text { display: grid; flex: 1; min-width: 0; }
+.dept-name { font-weight: 600; }
+.dept-floor { font-size: 11px; color: var(--muted); }
+
+.badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--floor-color);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+main.disabled .dept { opacity: 0.45; cursor: default; }
+
+.status { min-height: 1.5em; margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+
+/* トグルスイッチ */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: #adb5bd;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.slider::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+.switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
